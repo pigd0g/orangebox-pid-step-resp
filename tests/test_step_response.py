@@ -47,6 +47,17 @@ class TestModels(unittest.TestCase):
         self.assertEqual(params.p, 0.0)
         self.assertEqual(params.i, 0.0)
         self.assertEqual(params.d, 0.0)
+
+    def test_pid_params_to_dict(self):
+        """Test PIDParams dict mapping for export."""
+        params = PIDParams(p=55, i=115, d=7, f=115, boost=30, d_min=0)
+        mapped = params.to_dict()
+        self.assertEqual(mapped['P'], 55.0)
+        self.assertEqual(mapped['I'], 115.0)
+        self.assertEqual(mapped['D'], 7.0)
+        self.assertEqual(mapped['FF'], 115.0)
+        self.assertEqual(mapped['Boost'], 30.0)
+        self.assertEqual(mapped['D_min'], 0.0)
     
     def test_axis_result_creation(self):
         """Test AxisResult creation."""
@@ -61,6 +72,24 @@ class TestModels(unittest.TestCase):
         repr_str = repr(result)
         self.assertIn('pitch', repr_str)
         self.assertIn('25.50', repr_str)
+
+    def test_axis_result_to_dict(self):
+        """Test AxisResult export payload structure."""
+        result = AxisResult(axis_name='roll')
+        result.time_ms = np.array([0.0, 0.25, 0.5])
+        result.step_response = np.array([0.0, 0.5, 1.0])
+        result.rise_time_ms = 12.5
+        result.max_overshoot = 0.1
+        result.settling_time_ms = 45.0
+        result.num_segments = 8
+        result.pid_params = PIDParams(p=45, i=80, d=35, f=120, boost=15, d_min=10)
+
+        payload = result.to_dict()
+        self.assertEqual(payload['time_ms'], [0.0, 0.25, 0.5])
+        self.assertEqual(payload['step_response'], [0.0, 0.5, 1.0])
+        self.assertEqual(payload['summary']['rise_time_ms'], 12.5)
+        self.assertEqual(payload['summary']['num_segments'], 8)
+        self.assertEqual(payload['pid']['FF'], 120.0)
     
     def test_log_data_duration(self):
         """Test LogData duration calculation."""
@@ -98,6 +127,25 @@ class TestModels(unittest.TestCase):
         self.assertIn("30.00s", summary)
         self.assertIn("ROLL", summary)
         self.assertIn("25.00 ms", summary)
+
+    def test_step_response_result_to_dict(self):
+        """Test StepResponseResult export includes headers, pid map, and axes."""
+        result = StepResponseResult(
+            file_path="test.bbl",
+            log_index=1,
+            log_rate=4.0,
+            duration_seconds=2.0,
+            sample_count=8000,
+            headers={'Firmware type': 'Rotorflight'}
+        )
+        result.roll.pid_params = PIDParams(p=55, i=115, d=7, f=115, boost=30, d_min=0)
+
+        payload = result.to_dict()
+        self.assertEqual(payload['headers']['Firmware type'], 'Rotorflight')
+        self.assertEqual(payload['pid']['roll']['P'], 55.0)
+        self.assertEqual(payload['pid']['roll']['Boost'], 30.0)
+        self.assertIn('roll', payload['axes'])
+        self.assertIn('summary', payload['axes']['roll'])
 
 
 class TestCalculator(unittest.TestCase):
@@ -393,6 +441,22 @@ class TestIntegration(unittest.TestCase):
         self.assertEqual(analyzer.smooth_factor, 3)
         self.assertEqual(analyzer.min_input, 30.0)
         self.assertTrue(analyzer.y_correction)
+
+    def test_analyze_log_preserves_headers(self):
+        """Test analyzer propagates parsed log headers into result."""
+        from pid_step_response.analyzer import StepResponseAnalyzer
+
+        analyzer = StepResponseAnalyzer()
+        log_data = LogData(log_index=1)
+        log_data.time_us = np.arange(100)
+        log_data.setpoint_roll = np.zeros(100)
+        log_data.gyro_roll = np.zeros(100)
+        log_data.log_rate = 4.0
+        log_data.headers = {'Firmware type': 'Rotorflight', 'rollPID': [55, 115, 7, 115, 30]}
+
+        result = analyzer._analyze_log("test.bbl", log_data)
+        self.assertIsNotNone(result)
+        self.assertEqual(result.headers['Firmware type'], 'Rotorflight')
 
 
 if __name__ == '__main__':

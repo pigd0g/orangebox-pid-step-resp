@@ -18,6 +18,7 @@ Usage:
 """
 
 import sys
+import json
 from pathlib import Path
 
 from pid_step_response import StepResponseAnalyzer, plot_step_response
@@ -70,6 +71,12 @@ def main():
             print("Note: matplotlib is required for plotting. Install with: pip install matplotlib")
         except Exception as e:
             print(f"Warning: Could not generate plot: {e}")
+
+    # Save combined JSON analysis output (one array entry per log)
+    json_path = output_dir / f"{Path(bbl_file).stem}_analysis.json"
+    with json_path.open('w', encoding='utf-8') as f:
+        json.dump([result.to_dict() for result in results], f, indent=2)
+    print(f"Analysis JSON saved to: {json_path}")
     
     print("\nAnalysis complete!")
 

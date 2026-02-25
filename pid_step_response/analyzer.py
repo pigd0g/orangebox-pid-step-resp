@@ -106,6 +106,7 @@ class StepResponseAnalyzer:
             log_rate=log_data.log_rate,
             duration_seconds=log_data.duration_seconds,
             sample_count=log_data.sample_count,
+            headers=log_data.headers,
             smooth_factor=self.smooth_factor,
             min_input=self.min_input
         )
