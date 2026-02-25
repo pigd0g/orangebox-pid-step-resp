@@ -155,6 +155,8 @@ def plot_step_response(
             
             if axis_result.pid_params.f > 0:
                 info_text += f"\nFF: {axis_result.pid_params.f:.0f}"
+            if axis_result.pid_params.boost > 0:
+                info_text += f"\nBoost: {axis_result.pid_params.boost:.0f}"
             if axis_result.pid_params.d_min > 0:
                 info_text += f"\nD-min: {axis_result.pid_params.d_min:.0f}"
             

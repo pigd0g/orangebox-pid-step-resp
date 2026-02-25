@@ -18,10 +18,14 @@ class PIDParams:
     i: float = 0.0
     d: float = 0.0
     f: float = 0.0  # Feedforward term
+    boost: float = 0.0  # Rotorflight boost term
     d_min: float = 0.0  # D-min term
     
     def __str__(self) -> str:
-        return f"P={self.p}, I={self.i}, D={self.d}, F={self.f}, D_min={self.d_min}"
+        return (
+            f"P={self.p}, I={self.i}, D={self.d}, "
+            f"F={self.f}, Boost={self.boost}, D_min={self.d_min}"
+        )
 
 
 @dataclass

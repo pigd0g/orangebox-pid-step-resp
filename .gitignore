@@ -17,3 +17,4 @@ __pycache__
 /*.sh
 /build-docs
 .pytest_cache
+logs/

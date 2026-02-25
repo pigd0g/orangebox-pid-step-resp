@@ -32,11 +32,12 @@ class TestModels(unittest.TestCase):
     
     def test_pid_params_creation(self):
         """Test PIDParams creation and string representation."""
-        params = PIDParams(p=45, i=80, d=35, f=120, d_min=20)
+        params = PIDParams(p=45, i=80, d=35, f=120, boost=30, d_min=20)
         self.assertEqual(params.p, 45)
         self.assertEqual(params.i, 80)
         self.assertEqual(params.d, 35)
         self.assertEqual(params.f, 120)
+        self.assertEqual(params.boost, 30)
         self.assertEqual(params.d_min, 20)
         self.assertIn("P=45", str(params))
     
@@ -332,6 +333,25 @@ class TestParser(unittest.TestCase):
         self.assertEqual(roll_pid.p, 45.0)
         self.assertEqual(roll_pid.i, 80.0)
         self.assertEqual(roll_pid.d, 35.0)
+
+    def test_extract_pid_params_rotorflight(self):
+        """Test Rotorflight PID extraction with FF and boost in axis PID arrays."""
+        from pid_step_response.parser import extract_pid_params
+
+        headers = {
+            'Firmware type': 'Rotorflight',
+            'rollPID': [55, 115, 7, 115, 30],
+            'pitchPID': [35, 115, 7, 115, 30],
+            'yawPID': [70, 85, 60, 0, 0],
+        }
+
+        roll_pid = extract_pid_params(headers, 'roll')
+        self.assertEqual(roll_pid.p, 55.0)
+        self.assertEqual(roll_pid.i, 115.0)
+        self.assertEqual(roll_pid.d, 7.0)
+        self.assertEqual(roll_pid.f, 115.0)
+        self.assertEqual(roll_pid.boost, 30.0)
+        self.assertEqual(roll_pid.d_min, 0.0)
     
     def test_get_field_index(self):
         """Test field index lookup."""

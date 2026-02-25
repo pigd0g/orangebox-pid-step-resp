@@ -1,7 +1,8 @@
 from orangebox import Parser
 
 # Load a file
-parser = Parser.load("btfl_all.bbl")
+# parser = Parser.load("btfl_all.bbl")
+parser = Parser.load(r"C:\Users\token\Software\Flight Systems\S2Ultra Tuning\GOOSKY_F405_all_20251219_103740.bbl")
 # or optionally select a log by index (1 is the default)
 # parser = Parser.load("btfl_all.bbl", 1)
 
@@ -13,7 +14,7 @@ print("field names:", parser.field_names)
 
 # Select a specific log within the file by index
 print("log count:", parser.reader.log_count)
-parser.set_log_index(2)
+parser.set_log_index(1)
 
 # Print field values frame by frame
 for frame in parser.frames():

@@ -53,6 +53,21 @@ def parse_pid_string(pid_string: str) -> Tuple[float, float, float]:
         return 0.0, 0.0, 0.0
 
 
+def is_rotorflight_log(headers: Dict) -> bool:
+    """
+    Check if headers indicate a Rotorflight blackbox log.
+
+    Args:
+        headers: Dictionary of log headers
+
+    Returns:
+        True if this appears to be a Rotorflight log
+    """
+    firmware_type = str(headers.get('Firmware type', '')).lower()
+    firmware_revision = str(headers.get('Firmware revision', '')).lower()
+    return 'rotorflight' in firmware_type or 'rotorflight' in firmware_revision
+
+
 def extract_pid_params(headers: Dict, axis: str) -> PIDParams:
     """
     Extract PID parameters for a specific axis from headers.
@@ -66,6 +81,7 @@ def extract_pid_params(headers: Dict, axis: str) -> PIDParams:
     """
     axis_map = {'roll': 0, 'pitch': 1, 'yaw': 2}
     idx = axis_map.get(axis, 0)
+    is_rotorflight = is_rotorflight_log(headers)
     
     params = PIDParams()
     
@@ -82,6 +98,9 @@ def extract_pid_params(headers: Dict, axis: str) -> PIDParams:
             params.p = float(pid_val[0])
             params.i = float(pid_val[1])
             params.d = float(pid_val[2])
+            if is_rotorflight and len(pid_val) >= 5:
+                params.f = float(pid_val[3])
+                params.boost = float(pid_val[4])
     
     # Try alternative format: separate p, i, d arrays
     if params.p == 0 and params.i == 0 and params.d == 0:
