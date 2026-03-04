@@ -14,6 +14,7 @@ setup(
     ],
     extras_require={
         "plotting": ["matplotlib>=3.3.0"],
+        "gui": ["PySide6>=6.6.0", "pyqtgraph>=0.13.0"],
         "dev": ["pytest>=6.0.0"],
     },
     author="Károly Kiripolszky",

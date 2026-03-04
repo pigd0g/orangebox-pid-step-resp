@@ -1,5 +1,7 @@
 # Core dependencies
 numpy>=1.19.0
+PySide6>=6.6.0
+pyqtgraph>=0.13.0
 
 # Optional dependencies for plotting
 matplotlib>=3.3.0
