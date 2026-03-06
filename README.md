@@ -42,6 +42,23 @@ pip install -r requirements.txt
 python gui_step_response.py
 ```
 
+### 2b) Build a Windows distributable executable
+
+Install build dependencies:
+
+```bash
+pip install -r requirements-windows-build.txt
+```
+
+Build the executable bundle (run on Windows):
+
+```bash
+python scripts/build_windows_exe.py
+```
+
+The distributable will be generated under `dist/orangebox-step-response/` and launches the same GUI as `gui_step_response.py`.
+Use `--onefile` if you prefer a single executable output.
+
 ### 3) Analyze your Rotorflight log
 
 - Open a `.bbl` file in the GUI.

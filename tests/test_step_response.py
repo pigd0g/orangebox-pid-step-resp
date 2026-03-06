@@ -9,6 +9,7 @@ Unit tests for the PID Step Response library.
 import os
 import unittest
 import tempfile
+import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -457,6 +458,48 @@ class TestIntegration(unittest.TestCase):
         result = analyzer._analyze_log("test.bbl", log_data)
         self.assertIsNotNone(result)
         self.assertEqual(result.headers['Firmware type'], 'Rotorflight')
+
+
+class TestWindowsBuildScript(unittest.TestCase):
+    """Tests for Windows executable build script."""
+
+    @staticmethod
+    def _load_build_module():
+        repo_root = Path(__file__).resolve().parent.parent
+        script_path = repo_root / "scripts" / "build_windows_exe.py"
+        spec = importlib.util.spec_from_file_location("build_windows_exe", script_path)
+        module = importlib.util.module_from_spec(spec)
+        assert spec.loader is not None
+        spec.loader.exec_module(module)
+        return module
+
+    def test_build_pyinstaller_args_contains_gui_entry_and_required_bundles(self):
+        module = self._load_build_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            (project_root / "gui_step_response.py").write_text("print('gui')\n", encoding="utf-8")
+            args = module.build_pyinstaller_args(project_root)
+
+        self.assertIn(str(project_root / "gui_step_response.py"), args)
+        self.assertIn("--windowed", args)
+        self.assertIn("--collect-all", args)
+        self.assertIn("PySide6", args)
+        self.assertIn("pyqtgraph", args)
+        self.assertIn("pyqtgraph.exporters", args)
+
+    def test_build_pyinstaller_args_supports_onefile(self):
+        module = self._load_build_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            (project_root / "gui_step_response.py").write_text("print('gui')\n", encoding="utf-8")
+            args = module.build_pyinstaller_args(project_root, onefile=True)
+        self.assertIn("--onefile", args)
+
+    def test_build_pyinstaller_args_requires_gui_entry_script(self):
+        module = self._load_build_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with self.assertRaises(FileNotFoundError):
+                module.build_pyinstaller_args(Path(temp_dir))
 
 
 if __name__ == '__main__':
