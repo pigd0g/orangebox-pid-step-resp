@@ -469,11 +469,12 @@ class TestWindowsBuildScript(unittest.TestCase):
         script_path = repo_root / "scripts" / "build_windows_exe.py"
         spec = importlib.util.spec_from_file_location("build_windows_exe", script_path)
         module = importlib.util.module_from_spec(spec)
-        assert spec.loader is not None
+        if spec.loader is None:
+            raise RuntimeError(f"Could not load module from {script_path}")
         spec.loader.exec_module(module)
         return module
 
-    def test_build_pyinstaller_args_contains_gui_entry_and_required_bundles(self):
+    def test_build_pyinstaller_args_includes_gui_entry_script(self):
         module = self._load_build_module()
         with tempfile.TemporaryDirectory() as temp_dir:
             project_root = Path(temp_dir)
@@ -481,10 +482,25 @@ class TestWindowsBuildScript(unittest.TestCase):
             args = module.build_pyinstaller_args(project_root)
 
         self.assertIn(str(project_root / "gui_step_response.py"), args)
+
+    def test_build_pyinstaller_args_includes_windowed_flag(self):
+        module = self._load_build_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            (project_root / "gui_step_response.py").write_text("print('gui')\n", encoding="utf-8")
+            args = module.build_pyinstaller_args(project_root)
         self.assertIn("--windowed", args)
-        self.assertIn("--collect-all", args)
-        self.assertIn("PySide6", args)
-        self.assertIn("pyqtgraph", args)
+
+    def test_build_pyinstaller_args_includes_required_packages(self):
+        module = self._load_build_module()
+        with tempfile.TemporaryDirectory() as temp_dir:
+            project_root = Path(temp_dir)
+            (project_root / "gui_step_response.py").write_text("print('gui')\n", encoding="utf-8")
+            args = module.build_pyinstaller_args(project_root)
+
+        flag_pairs = list(zip(args, args[1:]))
+        self.assertIn(("--collect-all", "PySide6"), flag_pairs)
+        self.assertIn(("--collect-all", "pyqtgraph"), flag_pairs)
         self.assertIn("pyqtgraph.exporters", args)
 
     def test_build_pyinstaller_args_supports_onefile(self):

@@ -88,11 +88,16 @@ def main() -> int:
             "'pip install -r requirements-windows-build.txt'."
         ) from exc
 
+    try:
+        project_root = args.project_root.resolve(strict=True)
+    except FileNotFoundError as exc:
+        raise SystemExit(f"Project root does not exist: {args.project_root}") from exc
+
     pyinstaller_main.run(
         build_pyinstaller_args(
-            project_root=args.project_root.resolve(),
-            dist_dir=args.dist_dir.resolve() if args.dist_dir else None,
-            work_dir=args.work_dir.resolve() if args.work_dir else None,
+            project_root=project_root,
+            dist_dir=args.dist_dir,
+            work_dir=args.work_dir,
             onefile=args.onefile,
         )
     )
